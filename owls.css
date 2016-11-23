@@ -1,0 +1,22 @@
+.hide {
+	display: hidden;
+}
+.show {
+	display: block;
+}
+.floatLeft {
+	float: left;
+}
+.floatRight {
+	float: right;
+}
+.clear {
+	clear:all;
+}
+.scroll {
+	max-height:500px;
+	overflow-y: scroll;
+}
+p{
+	text-indent: 5em;
+}

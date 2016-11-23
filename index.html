@@ -1,0 +1,268 @@
+<html ng-app="owlsApp">
+<header>
+
+</header>
+<body class="container" ng-controller="classifierCtrl">
+	<h1><b>CT475 Assignment 2:</b> Classifying Owls</h1>
+	<p>The goal of this assignment is to design, implement and evaluate your own implementation of a
+machine learning algorithm. You may choose any classification algorithm, whether we have covered it in
+lectures or not, except for k-Nearest Neighbours or Naive Bayes.</p>
+<b>Implementation details:</b>
+<ul>
+	<li>You may use any programming/scripting language you wish, but it must be entirely your own
+work, NOT based in any part on an implementation found elsewhere.</li>
+	<li>You may make any reasonable design decisions (e.g. distance metric if kNN were allowed).</li>
+	<li>Your program must be able to read training data and testing data from a file or files, in a
+reasonable text-editable format of your choosing. For testing data, it must be able to output
+predicted and actual values to a file.</li>
+</ul>
+	<span><b>Name:</b> Liam Krewer</span><br/>
+	<span><b>Class:</b> 4BP</span><br/>
+	<span><b>Date:</b> 27/03/2014</span><br/>
+	<span><b>ID:</b> 10377065</span><br/>
+	<br/>
+
+	<h3>How to run the algorithm:</h3>
+	<p> Each step throughout the algorithm has a short set of instructions to guide you through the steps. Visualization of data is done through tables, which are all initially hidden as they take up a lot of space. Instead they are displayed as full-width buttons which will show/hide a table when pressed.</p>
+	<p> The main implementation is in Step 4., which can be run without any of the preceding steps as it automatically runs multiple iterations of the full algorithm. The other steps were included as they were a very useful learning tool for myself to understand how the algorithm changes weights over multiple iterations.</p>
+
+	<h3>Technologies Used</h3>
+	<p> Libraries used to create this small web app include <a href="http://angularjs.org/">AngularJS</a>, a client-side MVC framework, and <a href="http://getbootstrap.com/css/">Bootstrap</a>, a css framework. Neither of these two libraries contain any specific functions for machine learning algorithms but were used only to create this interface and the Logistic Regression algorithm used was written from scratch using mostly vanilla (aka plain) Javascript.</p>
+	<p> The owl data was included in a Javscript file (to deal with <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a> without needing a web server) as a <a href="http://en.wikipedia.org/wiki/JSON">.JSON</a> object which was converted from the csv version with some simple regex commands.</p>
+	<h3>Results</h3>
+	<p>Running the algorithm 10 times with a learning rate of 0.02 gives an average accuracy of around 80%. After running the algorithm 30 times some iterations give an accuracy of 100%.</p>
+	<br/>
+	<div class="row">
+		<input type="button" class="floatRight btn btn-default btn-block" ng-model="show" ng-click="show = !show" ng-init="show = false" value="{{show && 'Hide'||'View'}} Raw Data">
+		<div class="clear"></div>
+	</div>
+	<div class="row" ng-class="{'show': show, 'hide': !show}">
+		<table class="table table-striped" style="table-layout:fixed">
+			<tr>
+				<th>Body Length</th>
+				<th>Body Width</th>
+				<th>Wing Length</th>
+				<th>Wing Width</th>
+				<th>Type</th>
+			</tr>
+		</table>	
+		<div class="scroll">
+			<table class="table table-striped" style="table-layout:fixed">
+				<tr ng-repeat="owl in owls">
+					<td>{{owl[1]}}</td>
+					<td>{{owl[2]}}</td>
+					<td>{{owl[3]}}</td>
+					<td>{{owl[4]}}</td>
+					<td>{{owl[5]}}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<br/>
+	<div class="row">
+		<h3><b>1.</b> Splitting the Data</h3>
+		<p><b>a.</b>First shuffle the data a few times(you can view the shuffled data above) until you are satisfied it is randomised. This is done using a simple implementation of a <a url="http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle">Fisher-Yates shuffling algorithm</a>.</p>
+		<input type="button" ng-click="shuffleArray(owls)" value="shuffle" class="btn btn-default">
+		<span> Times Shuffled:{{timesShuffled}}</span>
+		<br/>
+		<br/>
+		<p><b>b.</b>Next split the data by the ratio entered below(between 0 and 1). As the data was randomized above this will split the raw data in two according to the ratio rather than picking random samples from an already random dataset.</p>
+		<div class="form-group">
+			<label>Ratio <input type="number" min="0" max="1" step="0.01" ng-model="ratio" ng-init="ratio = 0.666"> </label>
+			<input type="button" ng-click="split(owls,ratio)" value="split" class="btn btn-default">
+		</div>
+		<span><b>Training data size:</b> {{data.training.length}}/{{owls.length}}</span>
+		<br/>
+		<span><b>Testing data size:</b> {{data.testing.length}}/{{owls.length}}</span>
+	</div>
+	<br/>
+
+
+	<div class="row">
+		<input type="button" class="floatRight btn btn-default btn-block" ng-model="showB" ng-click="showB = !showB" ng-init="showB = false" value="{{showB && 'Hide'||'View'}} Training Data">
+		<div class="clear"></div>
+	</div>
+	<div class="row" ng-class="{'show': showB, 'hide': !showB}">
+		<table class="table table-striped" style="table-layout:fixed">
+			<tr>
+				<th>Body Length</th>
+				<th>Body Width</th>
+				<th>Wing Length</th>
+				<th>Wing Width</th>
+				<th>Type</th>
+			</tr>
+		</table>	
+		<div class="scroll">
+			<table class="table table-striped" style="table-layout:fixed">
+				<tr ng-repeat="owl in data.training">
+					<td>{{owl[1]}}</td>
+					<td>{{owl[2]}}</td>
+					<td>{{owl[3]}}</td>
+					<td>{{owl[4]}}</td>
+					<td>{{owl[5]}}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+
+	<br/><div class="row">
+		<input type="button" class="floatRight btn btn-default btn-block" ng-model="showC" ng-click="showC = !showC" ng-init="showC = false" value="{{showC && 'Hide'||'View'}} Testing Data">
+		<div class="clear"></div>
+	</div>
+	<div class="row" ng-class="{'show': showC, 'hide': !showC}">
+		<table class="table table-striped" style="table-layout:fixed">
+			<tr>
+				<th>Body Length</th>
+				<th>Body Width</th>
+				<th>Wing Length</th>
+				<th>Wing Width</th>
+				<th>Type</th>
+			</tr>
+		</table>	
+		<div class="scroll">
+			<table class="table table-striped" style="table-layout:fixed">
+				<tr ng-repeat="owl in data.testing">
+					<td>{{owl[1]}}</td>
+					<td>{{owl[2]}}</td>
+					<td>{{owl[3]}}</td>
+					<td>{{owl[4]}}</td>
+					<td>{{owl[5]}}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<br/>
+
+	<div class="row">
+		<h3><b>2.</b> Run the classification algorithm</h3>
+		<p>I decided to use the Logistic Regression algorithm with a soft threshold. From viewing the data it seems that a simple linear regression algorithm will fail with classifying between the Long Eared Owl and Snowy Owl as their attributes are very similar.</p>
+		<p>As the logistic regression algorithm gives a binary classification(though as a probability due to the soft threshold), I will run it three times, each time to classify the probability of a sample being one of the three types of owls. To quickly reach an accurate hypothesis, a batch gradient descent will be used on the weights, with a static learning rate (alpha) which can be set below.</p>
+	</div>
+
+	<div class="row">
+		<label>Learning Rate (alpha): <input type="number" ng-model="learningRate" min="0" max="1" step="0.0001"></label>
+		<br />
+		<input type="button" value="Train Data" ng-click="classifyTrainingData()" class="btn btn-default">
+		<br />
+		<br />
+		<input ng-click="resetClassification()" value="Reset Classification Data" type="button" class="btn btn-default">
+		<br />	
+		<br />
+		<table class="table table-striped">
+			<tr>
+				<th>Type</th>
+				<th>Theta 0</th>
+				<th>Theta Body Length</th>
+				<th>Theta Body Width</th>
+				<th>Theta Wing Length</th>
+				<th>Theta Wing Width</th>
+			</tr>
+			<tr ng-repeat="(type,weights) in classification">
+				<td>{{type}}</td>
+				<td>{{(weights[0]).toFixed(2)}}</td>
+				<td>{{(weights[1]).toFixed(2)}}</td>
+				<td>{{(weights[2]).toFixed(2)}}</td>
+				<td>{{(weights[3]).toFixed(2)}}</td>
+				<td>{{(weights[4]).toFixed(2)}}</td>
+			</tr>
+		</table>
+	</div>
+
+
+	<div class="row">
+		<h3><b>3.</b> Classify the testing data</h3>
+		<p>To test the training data from above you can classify the testing data defined in step 1. using the button below and view the results in the "Testing Data Results" table below.</p>
+		<br/>
+		<input type="button" value="Test Classification Algorithm" ng-click="test()" class="btn btn-default">
+		<br/>
+	</div>
+	<br/>
+	<div class="row">
+		<input type="button" class="floatRight btn btn-default btn-block" ng-model="showD" ng-click="showD = !showD" ng-init="showD = false" value="{{showD && 'Hide'||'View'}} Testing Data Results">
+		<div class="clear"></div>
+	</div>
+	<div class="row" ng-class="{'show': showD, 'hide': !showD}">
+		<table class="table" style="table-layout:fixed">
+			<tr>
+				<th>Actual Value</th>
+				<th>% BarnOwl</th>
+				<th>% LongEaredOwl</th>
+				<th>% SnowyOwl</th>
+				<th>Guessed Value</th>
+			</tr>
+		</table>	
+		<div class="scroll">
+			<table class="table" style="table-layout:fixed">
+				<tr ng-repeat="owl in data.testResults" ng-class="{'success' : owl.correct,'danger' : !owl.correct}">
+					<td>{{owl.actual}}</td>
+					<td>{{(owl.BarnOwl*100).toFixed(2)}}</td>
+					<td>{{(owl.LongEaredOwl*100).toFixed(2)}}</td>
+					<td>{{(owl.SnowyOwl*100).toFixed(2)}}</td>
+					<td>{{owl.guessed}}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<br/>
+
+	<div class="row">
+		<h3><b>4.</b> Test with multiple iterations</h3>
+		<p>To properly test the classification algorithm, first reset the training data conducted thus far, set a number of iterations and run the algorithm multiple times.</p>
+		<p>The <i>'Run multiple tests'</i> button below will shuffle and split the data each iteration but the classification data (weights) won't be reset, so given sufficient iterations they should increase the percentage accuracy which can be seen in the final table 'Percentage Accuracy' below. </p>
+		<br />
+		<input ng-click="resetClassification()" value="Reset Classification Data" type="button" class="btn btn-default">
+		<br/>
+		<br/>
+		<label>No. of Iterations: <input ng-model="iterations" type="number" min="1" max="10000" step="1"></label>
+		<br />
+		<br />
+		<input ng-click="trainIterations()" value="Run multiple tests" type="button" class="btn btn-default">
+		<br />
+	</div>
+	<br/>
+	<div class="row">
+		<input type="button" class="floatRight btn btn-default btn-block" ng-model="showE" ng-click="showE = !showE" ng-init="showE = false" value="{{showE && 'Hide'||'View'}} Percentage Accuracy">
+		<div class="clear"></div>
+	</div>
+	<div class="row" ng-class="{'show': showE, 'hide': !showE}">
+		<table class="table" style="table-layout:fixed">
+			<tr>
+				<th>Iteration #</th>
+				<th>Correct Guesses</th>
+			</tr>
+		</table>	
+		<div class="scroll">
+			<table class="table table-striped" style="table-layout:fixed">
+				<tr ng-repeat="(no,test) in percentageAccuracy">
+					<td>{{no}}</td>
+					<td>{{(test).toFixed(2)}} %</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<br />
+	<div class="row">
+		<span>Average Percentage Accuracy: {{averagePercentage()}} %</span>
+	</div>
+
+
+
+
+
+
+
+
+
+
+	<br/>
+	<br/>
+	<br/>
+	<br/>
+</body>
+<script type="text/javascript" src="angular.js"></script>
+<script type="text/javascript" src="data.js"></script>
+<script type="text/javascript" src="owls.js"></script>
+<link rel="stylesheet" type="text/css" href="bootstrap.css">
+<link rel="stylesheet" type="text/css" href="owls.css">
+</html>
